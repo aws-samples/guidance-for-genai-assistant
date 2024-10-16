@@ -15,12 +15,9 @@ from langchain.chains import ConversationChain
 from langchain_community.chat_models import BedrockChat
 from langchain.memory import ConversationBufferMemory
 
-
-ACCESS_KEY = env.access_key 
-SECRET_KEY = env.secret_key
 region = env.region
 s3_bucket = env.s3_bucket_name
-session = boto3.Session(region_name=region,aws_access_key_id=ACCESS_KEY,aws_secret_access_key=SECRET_KEY)
+session = boto3.Session(region_name=region)
 
 def create_beddrock_client():
         bedrock_client = session.client("bedrock-runtime")
