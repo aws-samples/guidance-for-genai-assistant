@@ -93,7 +93,7 @@ cd guidance-for-genai-assistant
 cat requirements.log
 ```
 
-3. Open env.py file in the guidance-for-genai-assistant directory and update with your AWS account keys,AWS Region and Amazon S3 bucket information.
+3. Open env.py file in the guidance-for-genai-assistant directory and update with your AWS Region and Amazon S3 bucket information.
 ```sql
 vi env.py
 ```
