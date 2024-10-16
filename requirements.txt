@@ -4,5 +4,5 @@ langchain
 langchain_community
 bs4
 requests
-streamlit==1.27.1
+streamlit==1.37.0
 youtube_transcript_api==0.6.1
