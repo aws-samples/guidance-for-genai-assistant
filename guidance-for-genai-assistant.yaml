@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template to deploy GenAI-Assistant guidance on AWS.
+
+Parameters:
+  InstanceType:
+    Type: String
+    Description: EC2 instance type (e.g., t3.medium)
+    Default: t3.medium
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+
+  VPCId:
+    Type: AWS::EC2::VPC::Id
+    Description: The VPC ID where the EC2 instance will be deployed.
+  
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: The Subnet ID for the EC2 instance.
+
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: The Security Group ID for the EC2 instance.
+
+  AmiId:
+    Type: String
+    Description: The AMI ID for the EC2 instance. Please provide a valid AMI ID for your region.
+    Default: ami-03a6eaae9938c858c  # Example AMI, replace with a valid one
+
+Resources:
+  # IAM Role for EC2 instance with policies for Bedrock and S3 bucket
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        # Policy for Bedrock service access
+        - PolicyName: BedrockAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:ListModels
+                Resource: 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+        # Policy for misc access
+        - PolicyName: MiscAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                    - polly:SynthesizeSpeech
+                    - textract:StartDocumentTextDetection
+                    - textract:GetDocumentTextDetection
+                    - transcribe:GetTranscriptionJob
+                    - transcribe:StartTranscriptionJob
+                    - s3:PutObject
+                    - s3:GetObject 
+                Resource: "*"
+
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: EC2InstanceRole
+
+  # EC2 Instance resource
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref AmiId
+      IamInstanceProfile: 
+        Ref: EC2InstanceProfile
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref SubnetId
+          GroupSet: 
+            - !Ref SecurityGroupId
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 10
+            VolumeType: gp3
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y git
+          yum install -y python
+          yum install -y pip
+          pip install virtualenv
+          cd /home/ec2-user
+          git clone https://github.com/aws-samples/guidance-for-genai-assistant.git
+          chmod +x /home/ec2-user/guidance-for-genai-assistant
+          chown -R ec2-user:ec2-user /home/ec2-user/guidance-for-genai-assistant
+          cd guidance-for-genai-assistant
+          python3 -m venv venv
+          source ./venv/bin/activate 
+          pip install -r requirements.txt > requirements.log
+
+          
+
+
+Outputs:
+  EC2InstancePublicIP:
+    Description: Public IP of the newly created EC2 instance
+    Value: !GetAtt EC2Instance.PublicIp
+
+  EC2InstanceId:
+    Description: Instance ID of the EC2 instance
+    Value: !Ref EC2Instance
