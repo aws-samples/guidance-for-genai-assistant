@@ -20,19 +20,32 @@ Parameters:
   
   SubnetId:
     Type: AWS::EC2::Subnet::Id
-    Description: The Subnet ID for the EC2 instance.
+    Description: The Public subnet ID from the VPC you have selected. This will be used to deploy Amazon EC2 instance.
 
-  SecurityGroupId:
-    Type: AWS::EC2::SecurityGroup::Id
-    Description: The Security Group ID for the EC2 instance.
 
   AmiId:
     Type: String
-    Description: The AMI ID for the EC2 instance. Please provide a valid AMI ID for your region.
+    Description: The AMI ID for the EC2 instance. Please provide a valid AMI ID for your region. 
     Default: ami-03a6eaae9938c858c  # Example AMI, replace with a valid one
 
 Resources:
   # IAM Role for EC2 instance with policies for Bedrock and S3 bucket
+  GenAISecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties: 
+      GroupDescription: "Security Group to allow inbound traffic on port 8080"
+      VpcId: !Ref VPCId  # Replace MyVPC with the actual VPC ID or use a parameter for VPC ID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0   # Allow connections from anywhere (you can restrict it further)
+        # Allow inbound SSH traffic on port 22 (for remote management)
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 # Allow SSH from anywhere (you can restrict this to specific IPs)
+
   EC2InstanceRole:
     Type: AWS::IAM::Role
     Properties: 
@@ -54,7 +67,7 @@ Resources:
                 Action:
                   - bedrock:InvokeModel
                   - bedrock:ListModels
-                Resource: 'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
+                Resource: 'arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0'
         # Policy for misc access
         - PolicyName: MiscAccessPolicy
           PolicyDocument:
@@ -91,7 +104,7 @@ Resources:
           DeviceIndex: 0
           SubnetId: !Ref SubnetId
           GroupSet: 
-            - !Ref SecurityGroupId
+            - !Ref GenAISecurityGroup
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -114,7 +127,6 @@ Resources:
           source ./venv/bin/activate 
           pip install -r requirements.txt > requirements.log
 
-          
 
 
 Outputs:
@@ -125,3 +137,7 @@ Outputs:
   EC2InstanceId:
     Description: Instance ID of the EC2 instance
     Value: !Ref EC2Instance
+
+  SecurityGroupId:
+    Description: "The ID of the Security Group"
+    Value: !Ref GenAISecurityGroup
