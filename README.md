@@ -72,28 +72,34 @@ These deployment instructions are optimized to best work on Linux. Deployment in
 ## Deployment Steps
 
 
-1. Download [AWS CloudFormation template](guidance-for-genai-assistant.yaml) from the GitHub repository and deploy the CloudFormation stack
+1. Download [AWS CloudFormation template](guidance-for-genai-assistant.yaml) from the GitHub repository and deploy the CloudFormation stack.
+ ![Amazon CloudFormation Parameters](images/CFN-input.png)
 2. The CloudFormation stack deploys an Amazon EC2 instance, GitHub repository for GenAI-Assistant and other pre-requisites required for this Guidance.
 
 
 ## Deployment Validation 
 
-* Open CloudFormation console and verify the status of the CloudFormation stack. 
-* If deployment is successfull, you should see an active Amazon EC2 instance with name prefixed with CloudFormation stack. 
+* Open CloudFormation console and verify the status of the CloudFormation stack. It should have CREATE_COMPLETE status. 
+
 
 ## Running the Guidance 
 
-1. In the [AWS Console](https://aws.amazon.com/console/), select AWS Region where solution is deployed. search Amazon EC2 by typing in search bar on the AWS console.
- ![Amazon EC2](images/EC2_1.png)
-2. Navigate to Amazon EC2 instance deployed by this guidance.
- ![Amazon EC2](images/EC2_2.png)
-2. Navigate to guidance-for-genai-assistant directory and validate repository files. Review requirements.log file to make sure no errors during installation of required binaries.
+1. In the [AWS Console](https://aws.amazon.com/console/), navigate to  Amazon CloudFormation  and select CloudFormation stack deployed as part of this guidance. Navigate to 'resources' tab.
+ ![Amazon CloudFormation Parameters](images/CFN-output.png)
+2. Click on the Amazon EC2 instance URL. On Amazon EC2 console, select the instance and click on connect. 
+ ![Amazon EC2](images/ec2-connect1.png)
+
+3. Connect to EC2 instance.
+ ![Amazon EC2](images/ec2-connect2.png)
+
+4. Navigate to guidance-for-genai-assistant directory and validate repository files. Review requirements.log file to make sure no errors during installation of required binaries.
 ```sql
 cd guidance-for-genai-assistant
 cat requirements.log
 ```
+ ![Amazon EC2](images/ec2-login.png)
 
-3. Open env.py file in the guidance-for-genai-assistant directory and update with your AWS Region and Amazon S3 bucket information.
+5. Open env.py file in the guidance-for-genai-assistant directory and update with your AWS Region and Amazon S3 bucket information.
 ```sql
 vi env.py
 ```
@@ -101,9 +107,10 @@ vi env.py
 4. Start streamlit application 
 
 ```sql
+source ./venv/bin/activate
 streamlit run home.py --server.port 8080
 ```
-
+ ![Amazon EC2](images/ec2-start-app.png)
 
 ## Usage
 
